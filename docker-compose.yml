@@ -1,0 +1,50 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sustainability
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports: ["5432:5432"]
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+  backend:
+    build: ./backend
+    environment:
+      POSTGRES_URI: postgresql+psycopg2://postgres:postgres@db:5432/sustainability
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: change_me
+      VITE_API_URL: http://localhost:8000/api/v1
+    depends_on: [db, redis]
+    ports: ["8000:8000"]
+    volumes: ["./backend:/app"]
+    command: bash -c "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+  worker:
+    build: ./backend
+    environment:
+      POSTGRES_URI: postgresql+psycopg2://postgres:postgres@db:5432/sustainability
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: change_me
+    depends_on: [backend, redis]
+    command: celery -A app.workers.celery_app.celery worker -l info
+  beat:
+    build: ./backend
+    environment:
+      POSTGRES_URI: postgresql+psycopg2://postgres:postgres@db:5432/sustainability
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: change_me
+    depends_on: [backend, redis]
+    command: celery -A app.workers.celery_app.celery beat -l info
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    depends_on: [backend]
+    ports: ["5173:5173"]
+    volumes: ["./frontend:/app"]
+    command: npm run dev -- --host
+volumes:
+  pgdata:

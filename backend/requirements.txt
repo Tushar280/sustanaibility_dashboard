@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+psycopg2-binary
+python-jose[cryptography]
+pydantic
+alembic
+jinja2
+weasyprint
+pandas
+numpy
+scipy
+celery[redis]
+redis
+python-multipart
