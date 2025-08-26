@@ -13,3 +13,4 @@ scipy
 celery[redis]
 redis
 python-multipart
+pydantic-settings
